@@ -87,30 +87,28 @@ public:
     }
 };
 
-
-class Txc2 : public cSimpleModule
-{
-  protected:
-    virtual void initialize() override;
-    virtual void handleMessage(cMessage *msg) override;
+class exportXML{
+public:
     virtual void dump(const char *filename);
     virtual void dumpComponent(XMLWriter& xml, cComponent *component);
     virtual void dumpProperties(XMLWriter& xml, cProperties *properties);
     virtual std::string quote(const char *propertyValue);
 };
 
+
+
 inline const char *replace(const char *orig, const char *what, const char *replacement) {
     return strcmp(orig,what)==0 ? replacement : orig;
 }
-std::string Txc2::quote(const char *propertyValue)
+std::string exportXML::quote(const char *propertyValue)
 {
     if (!strchr(propertyValue, ',') && !strchr(propertyValue, ';'))
         return propertyValue;
     return std::string("\"") + propertyValue + "\"";
 }
 
-Define_Module(Txc2);
-void Txc2::dumpProperties(XMLWriter& xml, cProperties *properties)
+
+void exportXML::dumpProperties(XMLWriter& xml, cProperties *properties)
 {
     for (int i = 0; i < properties->getNumProperties(); i++) {
         cProperty *prop = properties->get(i);
@@ -131,7 +129,7 @@ void Txc2::dumpProperties(XMLWriter& xml, cProperties *properties)
     }
 }
 
-void Txc2::dumpComponent(XMLWriter& xml, cComponent *component)
+void exportXML::dumpComponent(XMLWriter& xml, cComponent *component)
 {
     const char *tagName = (component==getSimulation()->getSystemModule()) ? "network" : component->isModule() ? "module" : "channel";
     xml.openTag(tagName);
@@ -213,7 +211,7 @@ void Txc2::dumpComponent(XMLWriter& xml, cComponent *component)
     }
     xml.closeTag(tagName);
 }
-void Txc2::dump(const char *filename)
+void exportXML::dump(const char *filename)
 {
     std::ofstream os(filename, std::ios::out|std::ios::trunc);
     os << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
@@ -223,9 +221,21 @@ void Txc2::dump(const char *filename)
         throw cRuntimeError("Cannot write output file '%s'", filename);
         os.close();
     }
+class Txc2 : public cSimpleModule
+{
+  protected:
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
+    //virtual void dump(const char *filename);
+    //virtual void dumpComponent(XMLWriter& xml, cComponent *component);
+    //virtual void dumpProperties(XMLWriter& xml, cProperties *properties);
+    //virtual std::string quote(const char *propertyValue);
+};
+//Define_Module(Txc2);
 void Txc2::initialize()
 {
-    this->dump("abc.xml");
+    exportXML e;
+    e.dump("abc.xml");
     if (strcmp("tic", getName()) == 0) {
         // The `ev' object works like `cout' in C++.
         EV << "Sending initial message\n";
